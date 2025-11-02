@@ -21,6 +21,11 @@ const TaskSchema = new mongoose.Schema({
         ref:'Workspace',
         required:true
     },
+    project:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Project',
+        required:true
+    },
     status:{
         type:String,
         enum:Object.values(['todo','in-progress','done']),
