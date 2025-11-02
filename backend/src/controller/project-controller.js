@@ -1,6 +1,6 @@
-import { createProjectSchema, projectIdSchema } from "../validation/project-validation.js"
+import { createProjectSchema, projectIdSchema, updateProjectSchema } from "../validation/project-validation.js"
 import { workspaceIdSchema } from "../validation/workspace-validation.js";
-import { createProjectService ,getAllProjectsInWorkspaceService,getProjectByIdAndWorkspaceIdService,getProjectAnalyticsService} from "../services/project-service.js";
+import { createProjectService ,getAllProjectsInWorkspaceService,getProjectByIdAndWorkspaceIdService,getProjectAnalyticsService, updateProjectService, deleteProjectService} from "../services/project-service.js";
 import { getMemberRoleInWorkspaceService } from "../services/member-services.js";
 import { Permissions } from "../enum/role-enum.js";
 import { roleGuard } from "../utils/roleGuard.js";
@@ -64,4 +64,41 @@ export const getProjectAnalyticsController=async(req,res)=>{
 
 
     return res.status(200).json({message:"Project analytics retrieved successfully",analytics})
+}
+
+/**
+ * Update project
+ * PUT /project/:id/workspace/:workspaceId/update
+ */
+export const updateProjectController = async (req, res) => {
+    const projectId = projectIdSchema.parse(req.params.id);
+    const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
+    const updateData = updateProjectSchema.parse(req.body);
+    const userId = req.user?._id;
+
+    // Check user has permission to edit projects
+    const { rolename } = await getMemberRoleInWorkspaceService(userId, workspaceId);
+    roleGuard(rolename, [Permissions.EDIT_PROJECT]);
+
+    const { project } = await updateProjectService(workspaceId, projectId, updateData);
+
+    res.status(200).json({ message: "Project updated successfully", project });
+}
+
+/**
+ * Delete project
+ * DELETE /project/:id/workspace/:workspaceId
+ */
+export const deleteProjectController = async (req, res) => {
+    const projectId = projectIdSchema.parse(req.params.id);
+    const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
+    const userId = req.user?._id;
+
+    // Check user has permission to delete projects
+    const { rolename } = await getMemberRoleInWorkspaceService(userId, workspaceId);
+    roleGuard(rolename, [Permissions.DELETE_PROJECT]);
+
+    const { project } = await deleteProjectService(workspaceId, projectId);
+
+    res.status(200).json({ message: "Project deleted successfully", project });
 }

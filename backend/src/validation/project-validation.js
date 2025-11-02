@@ -11,9 +11,12 @@ export const createProjectSchema=z.object({
     name:nameSchema,
     description:descriptionSchema
 })
+
 export const updateProjectSchema=z.object({
     emoji:emojiSchema,
-    name:nameSchema,
+    name:nameSchema.optional(),
     description:descriptionSchema
+}).refine(data => data.emoji !== undefined || data.name !== undefined || data.description !== undefined, {
+    message: "At least one field (emoji, name, or description) must be provided for update"
 })
 

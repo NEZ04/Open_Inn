@@ -97,3 +97,59 @@ export const getProjectAnalyticsService = async (workspaceId, projectId) => {
 
 
 }
+
+/**
+ * Update project by ID
+ */
+export const updateProjectService = async (workspaceId, projectId, updateData) => {
+    const { emoji, name, description } = updateData;
+
+    // Find the project
+    const project = await Projects.findOne({
+        _id: projectId,
+        workspace: workspaceId
+    });
+
+    if (!project) {
+        const error = new Error("Project not found in this workspace");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Update fields
+    if (emoji !== undefined) project.emoji = emoji;
+    if (name !== undefined) project.name = name;
+    if (description !== undefined) project.description = description;
+
+    await project.save();
+
+    // Populate creator details
+    await project.populate('createdBy', '_id name email profilePicture');
+
+    return { project };
+}
+
+/**
+ * Delete project by ID
+ */
+export const deleteProjectService = async (workspaceId, projectId) => {
+    // Find the project
+    const project = await Projects.findOne({
+        _id: projectId,
+        workspace: workspaceId
+    });
+
+    if (!project) {
+        const error = new Error("Project not found in this workspace");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Optional: Delete all tasks associated with this project
+    await Task.deleteMany({ project: projectId, workspace: workspaceId });
+
+    // Delete the project
+    await Projects.findByIdAndDelete(projectId);
+
+    return { project };
+}
