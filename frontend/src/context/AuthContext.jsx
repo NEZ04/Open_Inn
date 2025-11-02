@@ -14,12 +14,22 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const storedUser = localStorage.getItem('user')
-      if (storedUser) {
-        setUser(JSON.parse(storedUser))
+      // Try to get current user from backend
+      const response = await authAPI.getCurrentUser()
+      if (response.data.user) {
+        setUser(response.data.user)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
       }
     } catch (error) {
-      console.error('Auth check failed:', error)
+      // If API call fails, try localStorage
+      try {
+        const storedUser = localStorage.getItem('user')
+        if (storedUser) {
+          setUser(JSON.parse(storedUser))
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err)
+      }
     } finally {
       setLoading(false)
     }
@@ -49,11 +59,11 @@ export const AuthProvider = ({ children }) => {
   }
 
   const loginWithGoogle = () => {
-    window.location.href = 'http://localhost:8000/auth/google'
+    window.location.href = 'http://localhost:8000/api/v1/auth/google'
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, loginWithGoogle }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, loginWithGoogle, checkAuth }}>
       {children}
     </AuthContext.Provider>
   )
