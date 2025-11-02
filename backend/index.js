@@ -2,9 +2,10 @@ import express from 'express'
 import cors from "cors"
 import session from "express-session"
 import dotenv from 'dotenv'
+dotenv.config()
 import { connectDB } from './libs/connectDB.js';
-import './src/config/passport.js';
 import passport from 'passport';
+await import('./src/config/passport.js');
 import authroutes from './src/routes/auth-route.js';
 import userroutes from './src/routes/user-route.js';
 import isAuthenticated from './middlewares/isAuthenticatedMiddleware.js';
@@ -14,7 +15,6 @@ import projectRoute from './src/routes/project-route.js';
 import matchmakingRoutes from './src/routes/matchmaking-route.js';
 import taskRoute from './src/routes/task-route.js';
 import profileRoutes from './src/routes/profile-route.js';
-dotenv.config()
 const { errorHandler } = await import('./middlewares/errorHandler.js');
 
 

@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   const loginWithGoogle = () => {
-    window.location.href = 'http://localhost:8000/api/v1/auth/google'
+    window.location.href = 'http://localhost:8000/api/auth/google'
   }
 
   return (

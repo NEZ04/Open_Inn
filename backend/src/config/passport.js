@@ -45,13 +45,24 @@ passport.use(new LocalStrategy({
 
 //Google Strategy
 
-passport.use(new GoogleStrategy.Strategy({
-    clientID:process.env.GOOGLE_CLIENT_ID,
-    clientSecret:process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:process.env.GOOGLE_CALLBACK_URL,
-    scope:['profile','email'],
-    passReqToCallback:true
-},async(req,accessToken,refreshToken,profile,done)=>{
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleCallbackUrl = process.env.GOOGLE_CALLBACK_URL;
+
+console.log('[passport] Google OAuth Config:', {
+    clientID: googleClientId ? 'SET' : 'MISSING',
+    clientSecret: googleClientSecret ? 'SET' : 'MISSING',
+    callbackURL: googleCallbackUrl
+});
+
+if (googleClientId && googleClientSecret && googleCallbackUrl) {
+    passport.use(new GoogleStrategy.Strategy({
+        clientID: googleClientId,
+        clientSecret: googleClientSecret,
+        callbackURL: googleCallbackUrl,
+        scope:['profile','email'],
+        passReqToCallback:true
+    },async(req,accessToken,refreshToken,profile,done)=>{
     try {
         const {email,sub:googleId,picture}=profile._json;
         console.log("Profile:", profile); 
@@ -73,6 +84,9 @@ passport.use(new GoogleStrategy.Strategy({
     } catch (error) {
         console.error("Error in Google Strategy:", error);
         done(error, null);
+        }
     }
+    ))
+} else {
+    console.warn('[passport] Google OAuth strategy not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALLBACK_URL to enable it.');
 }
-))
