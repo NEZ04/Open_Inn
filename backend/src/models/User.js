@@ -34,7 +34,27 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-
+    bio: {
+        type: String,
+        default: ''
+    },
+    location: {
+        type: String,
+        default: ''
+    },
+    userRole: {
+        type: String,
+        enum: ['freelancer', 'project_owner', 'open_source_contributor', 'job_seeker', 'hackathon_participant'],
+        default: null
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    profileCompleted: {
+        type: Boolean,
+        default: false
+    },
     // This is the AI-generated vector
     profileVector: {
         type: [Number], // Defines it as an array of numbers

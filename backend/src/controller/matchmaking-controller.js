@@ -1,100 +1,146 @@
-import fetch from 'node-fetch';
-
-const AI_MICROSERVICE_URL = process.env.AI_MICROSERVICE_URL || 'http://localhost:8001';
+import {
+    generateMatchesForProject,
+    generateMatchesForUser,
+    getMatchesForProject,
+    getMatchesForUser
+} from '../services/matchmaking-service.js';
+import Match from '../models/Match.js';
 
 /**
- * Get team member recommendations for a project
+ * Generate matches for a project
+ * POST /api/matchmaking/generate
  */
-export const getTeamRecommendations = async (req, res) => {
+export async function generateMatches(req, res, next) {
     try {
-        console.log('🔍 Matchmaking endpoint called');
-        const { project_requirements, candidates, top_n = 10 } = req.body;
+        const { projectId } = req.body;
 
-        // Validate input
-        if (!project_requirements || !candidates) {
-            console.log('❌ Missing required fields');
+        if (!projectId) {
             return res.status(400).json({
-                error: 'Missing required fields: project_requirements and candidates'
+                success: false,
+                message: 'Project ID is required'
             });
         }
 
-        console.log(`📞 Calling microservice at: ${AI_MICROSERVICE_URL}`);
-        
-        // Call the AI microservice
-        const response = await fetch(`${AI_MICROSERVICE_URL}/api/matchmaking/match`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                project_requirements,
-                candidates,
-                top_n
-            })
-        });
+        console.log(`🔍 Generating matches for project: ${projectId}`);
 
-        if (!response.ok) {
-            throw new Error(`Microservice error: ${response.statusText}`);
-        }
+        const result = await generateMatchesForProject(projectId);
 
-        const matchResults = await response.json();
-
-        res.status(200).json({
-            success: true,
-            data: matchResults
-        });
+        return res.status(200).json(result);
 
     } catch (error) {
-        console.error('Error calling matchmaking microservice:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get team recommendations',
-            message: error.message
-        });
+        console.error('Error in generateMatches controller:', error);
+        next(error);
     }
-};
+}
 
 /**
- * Calculate match score for a single candidate
+ * Generate matches for a user
+ * POST /api/matchmaking/generate-user
  */
-export const calculateMatchScore = async (req, res) => {
+export async function generateUserMatches(req, res, next) {
     try {
-        const { project_requirements, candidate } = req.body;
+        const { userId } = req.body;
 
-        if (!project_requirements || !candidate) {
+        if (!userId) {
             return res.status(400).json({
-                error: 'Missing required fields: project_requirements and candidate'
+                success: false,
+                message: 'User ID is required'
             });
         }
 
-        const response = await fetch(`${AI_MICROSERVICE_URL}/api/matchmaking/score`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                project_requirements,
-                candidate
-            })
-        });
+        console.log(`🔍 Generating matches for user: ${userId}`);
 
-        if (!response.ok) {
-            throw new Error(`Microservice error: ${response.statusText}`);
-        }
+        const result = await generateMatchesForUser(userId);
 
-        const scoreResult = await response.json();
+        return res.status(200).json(result);
 
-        res.status(200).json({
+    } catch (error) {
+        console.error('Error in generateUserMatches controller:', error);
+        next(error);
+    }
+}
+
+/**
+ * Get matches for a project
+ * GET /api/matchmaking/project/:projectId
+ */
+export async function getProjectMatches(req, res, next) {
+    try {
+        const { projectId } = req.params;
+        const limit = parseInt(req.query.limit) || 20;
+
+        const matches = await getMatchesForProject(projectId, limit);
+
+        return res.status(200).json({
             success: true,
-            data: scoreResult
+            count: matches.length,
+            matches
         });
 
     } catch (error) {
-        console.error('Error calculating match score:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to calculate match score',
-            message: error.message
-        });
+        console.error('Error in getProjectMatches controller:', error);
+        next(error);
     }
-};
+}
+
+/**
+ * Get matches for a user
+ * GET /api/matchmaking/user/:userId
+ */
+export async function getUserMatches(req, res, next) {
+    try {
+        const { userId } = req.params;
+        const limit = parseInt(req.query.limit) || 20;
+
+        const matches = await getMatchesForUser(userId, limit);
+
+        return res.status(200).json({
+            success: true,
+            count: matches.length,
+            matches
+        });
+
+    } catch (error) {
+        console.error('Error in getUserMatches controller:', error);
+        next(error);
+    }
+}
+
+/**
+ * Get match statistics
+ * GET /api/matchmaking/stats/:projectId
+ */
+export async function getMatchStats(req, res, next) {
+    try {
+        const { projectId } = req.params;
+
+        const stats = await Match.aggregate([
+            { $match: { projectId: projectId } },
+            {
+                $group: {
+                    _id: '$matchType',
+                    count: { $sum: 1 },
+                    avgScore: { $avg: '$matchScore' },
+                    maxScore: { $max: '$matchScore' },
+                    minScore: { $min: '$matchScore' }
+                }
+            }
+        ]);
+
+        const totalMatches = await Match.countDocuments({ projectId });
+
+        return res.status(200).json({
+            success: true,
+            totalMatches,
+            stats
+        });
+
+    } catch (error) {
+        console.error('Error in getMatchStats controller:', error);
+        next(error);
+    }
+}
+
+// Backward compatibility with old API
+export const getTeamRecommendations = generateMatches;
+export const calculateMatchScore = generateUserMatches;

@@ -13,6 +13,7 @@ import memberRoute from './src/routes/member-route.js';
 import projectRoute from './src/routes/project-route.js';
 import matchmakingRoutes from './src/routes/matchmaking-route.js';
 import taskRoute from './src/routes/task-route.js';
+import profileRoutes from './src/routes/profile-route.js';
 dotenv.config()
 const { errorHandler } = await import('./middlewares/errorHandler.js');
 
@@ -54,7 +55,8 @@ app.use(`${process.env.BASE_PATH}/workspace`,isAuthenticated,workspaceRoute)
 app.use(`${process.env.BASE_PATH}/member`,isAuthenticated,memberRoute)
 app.use(`${process.env.BASE_PATH}/project`,isAuthenticated,projectRoute)
 app.use(`${process.env.BASE_PATH}/task`,isAuthenticated,taskRoute)
-// app.use(`${process.env.BASE_PATH}/matchmaking`,matchmakingRoutes) // No auth for testing, add isAuthenticated later
+app.use(`${process.env.BASE_PATH}/profile`,isAuthenticated,profileRoutes)
+app.use(`${process.env.BASE_PATH}/matchmaking`,isAuthenticated,matchmakingRoutes)
 
 app.use(errorHandler)
 

@@ -6,6 +6,10 @@ const projectSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    title: {
+        type: String,
+        trim: true
+    },
     emoji: {
         type: String,
         required: false,
@@ -22,17 +26,50 @@ const projectSchema = new mongoose.Schema({
     },
     workspace: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Workspace',
+        ref: 'Workspace'
+    },
+    ownerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    requiredSkills: {
+        type: [String],
+        default: []
     },
     techStack: [{
         type: String,
         lowercase: true
     }],
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    budgetMin: {
+        type: Number,
+        min: 0
+    },
+    budgetMax: {
+        type: Number,
+        min: 0
+    },
+    timeline: {
+        type: String,
+        trim: true
+    },
+    projectType: {
+        type: String,
+        enum: ['freelance_gig', 'open_source', 'startup', 'hackathon', 'full_time_job'],
+        default: 'freelance_gig'
+    },
+    status: {
+        type: String,
+        enum: ['open', 'in_progress', 'completed', 'cancelled'],
+        default: 'open'
+    },
+    deadline: {
+        type: Date
     }
 
 }, { timestamps: true })
