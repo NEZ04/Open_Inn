@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, loginWithGoogle } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
@@ -11,6 +12,9 @@ const Login = () => {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Get the page user was trying to access before being redirected to login
+  const from = location.state?.from?.pathname || '/dashboard'
 
   const handleChange = (e) => {
     setFormData({
@@ -27,7 +31,8 @@ const Login = () => {
 
     try {
       await login(formData.email, formData.password)
-      navigate('/dashboard')
+      // Redirect to the page they were trying to access, or dashboard
+      navigate(from, { replace: true })
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.')
     } finally {
